@@ -1,0 +1,113 @@
+<!doctype html>
+<html><head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" charset="UTF-8">
+	<style type='text/css'>
+	   img{
+        width:100% !important;
+        height:auto !important;
+    }
+	</style>
+</head>
+
+<body>
+	<script>
+	function setupWebViewJavascriptBridge(callback) {
+    if (window.WebViewJavascriptBridge) { return callback(WebViewJavascriptBridge); }
+    if (window.WVJBCallbacks) { return window.WVJBCallbacks.push(callback); }
+    window.WVJBCallbacks = [callback];
+    var WVJBIframe = document.createElement('iframe');
+    WVJBIframe.style.display = 'none';
+    WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+    document.documentElement.appendChild(WVJBIframe);
+    setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+}
+
+	setupWebViewJavascriptBridge(function(bridge) {
+
+    bridge.registerHandler('getImageUrlsArray', function(data, responseCallback) {
+        //获取所有img标签
+		var allImage = document.querySelectorAll("img");
+        //Array.prototype.slice.call(arguments)能将具有length属性的对象转成数组
+        allImage = Array.prototype.slice.call(allImage, 0);
+        var imageUrlsArray = new Array();
+        allImage.forEach(function(image) {
+            //将所有图片的URL存入新数组
+            var esrc = image.getAttribute("esrc");
+            var newLength = imageUrlsArray.push(esrc);
+        });
+        //将URL数组回传OC端
+		responseCallback({'data':imageUrlsArray})
+	}) 
+
+    bridge.registerHandler('imagesDownloadComplete',function(data) {
+        //解析数据，拿到原来的url和本地存储地址
+    	var oldUrl = data['old']
+    	var localCachePath = data['new']
+    	imagesDownloadComplete(oldUrl,localCachePath)
+    })
+
+    var errorNum = 0
+	function imagesDownloadComplete(pOldUrl, pNewUrl) { 
+        //获取所以得img标签
+		var allImage = document.querySelectorAll("img");
+   			allImage = Array.prototype.slice.call(allImage, 0);
+    		allImage.forEach(function(image) {
+        if (image.getAttribute("esrc") == pOldUrl || image.getAttribute("esrc") == decodeURIComponent(pOldUrl)) {
+            //加载本地图片地址
+            image.src = pNewUrl;
+            image.addEventListener("click", onImageClick2)
+            //图片加载错误时再加载
+            image.onerror = function(){
+                if (errorNum < 5) {
+                    errorNum ++;
+                    this.src = pNewUrl;
+                }
+                console.log('图片加载从错误重新加载')
+             }
+
+         }
+        });
+    }
+})
+
+
+    function onImageClick(picUrl){
+
+    setupWebViewJavascriptBridge(function(bridge) {
+        var allImage = document.querySelectorAll("img[esrc]");
+        allImage = Array.prototype.slice.call(allImage, 0);
+        var urls = new Array();
+        var index = -1;
+        var x = 0;
+        var y = 0;
+        var width = 0;
+        var height = 0;
+        allImage.forEach(function(image) {
+            var imgUrl = image.getAttribute("esrc");
+            var newLength = urls.push(imgUrl);
+            //获取
+            if(imgUrl == picUrl || imgUrl == decodeURIComponent(picUrl)){
+                index = newLength-1;
+                x = image.getBoundingClientRect().left;
+                y = image.getBoundingClientRect().top;
+                x = x + document.documentElement.scrollLeft;
+                y = y + document.documentElement.scrollTop;
+                width = image.width;
+                height = image.height;
+                console.log("x:"+x +";y:" + y+";width:"+image.width +";height:"+image.height);
+
+            }
+        });
+
+        console.log("检测到点击");
+        //将图片在图片数组中的index,frame回传给OC端
+        bridge.callHandler('imageDidClicked', {'index':index,'x':x,'y':y,'width':width,'height':height}, function(response) {
+            console.log("JS已经发出imgurl和index，同时收到回调，说明OC已经收到数据");
+        	});
+    });
+    }
+
+	</script>
+    
+	<P>mainviews</P>
+</body></html>

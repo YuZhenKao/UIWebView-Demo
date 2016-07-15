@@ -1,0 +1,20 @@
+PODS:
+  - SDWebImage (3.8.1):
+    - SDWebImage/Core (= 3.8.1)
+  - SDWebImage/Core (3.8.1)
+  - WebViewJavascriptBridge (5.0.5)
+  - YYKit (1.0.7):
+    - YYKit/no-arc (= 1.0.7)
+  - YYKit/no-arc (1.0.7)
+
+DEPENDENCIES:
+  - SDWebImage
+  - WebViewJavascriptBridge
+  - YYKit
+
+SPEC CHECKSUMS:
+  SDWebImage: 35f9627a3e44b4f292a8a8ce6a531fa488239b91
+  WebViewJavascriptBridge: a4d502315f1b8d9a51cd6a9174147ed567ec3bc5
+  YYKit: 843d1b26e20b82c695790c9a89907eaa1e99907f
+
+COCOAPODS: 0.38.2
